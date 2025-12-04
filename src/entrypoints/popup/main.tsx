@@ -68,6 +68,22 @@ const platforms: Platform[] = [
                 { icon: MessageSquareMore, title: '批量导出视频评论', onClick: () => { handleOpenDialog('post-comment') } },
             ];
         }
+    },
+    {
+        code: 'bsky',
+        hostname: 'bsky.app', // Bluesky 的域名
+        getItems: (handleOpenDialog) => {
+            return [
+                { 
+                    icon: BookText, 
+                    title: '批量导出帖子数据', 
+                    // 这里对应之前写的 src/entrypoints/bsky.content/tasks/post/index.tsx 中的 name: "post"
+                    onClick: () => { handleOpenDialog('post') } 
+                },
+                // 如果以后写了导出博主的功能，可以在这里加：
+                // { icon: CircleUser, title: '批量导出博主信息', onClick: () => { handleOpenDialog('author') } },
+            ];
+        }
     }
 ];
 

@@ -1,3 +1,4 @@
+
 /**
  * Copyright (c) Andy Zhou. (https://github.com/iszhouhua)
  *
@@ -17,7 +18,7 @@ import { CollapsibleItem, CollapsibleItemProp, Item } from './item';
 type Platform = {
     code: string;
     hostname: string;
-    getItems: (handleOpenDialog: (name: string) => void) => CollapsibleItemProp[];
+    getItems: (handleOpenDialog: (name: string, data?: any) => void) => CollapsibleItemProp[];
 };
 
 const platforms: Platform[] = [
@@ -94,19 +95,14 @@ const platforms: Platform[] = [
                             icon: BookUser, 
                             title: '导出用户粉丝(Followers)', 
                             onClick: () => { 
-                                // 这里我们需要传递 type 参数，但 handleOpenDialog 封装简单。
-                                // 可以在 onMessage 接收端处理默认值，或者这里发消息时携带更多参数
-                                // 简单起见，我们在 Task Dialog 初始化时如果不传 type 默认为 followers，
-                                // 或者你需要修改 main.tsx 的 handleOpenDialog 允许传参。
-                                // 这里假设修改了 handleOpenDialog 或直接发消息:
-                                sendMessage('openTaskDialog', { name: 'author-followers', type: 'followers' }, tab?.id);
+                                handleOpenDialog('author-followers', { type: 'followers' });
                             } 
                         },
                         { 
                             icon: BookUser, 
                             title: '导出用户关注(Following)', 
                             onClick: () => { 
-                                sendMessage('openTaskDialog', { name: 'author-followers', type: 'following' }, tab?.id);
+                                handleOpenDialog('author-followers', { type: 'following' });
                             } 
                         },
                     ]
@@ -132,8 +128,8 @@ const App = () => {
             });
     }, []);
 
-    const handleOpenDialog = (name: string) => {
-        sendMessage('openTaskDialog', { name }, tab?.id);
+    const handleOpenDialog = (name: string, data?: any) => {
+        sendMessage('openTaskDialog', { name, ...data }, tab?.id);
     }
 
     return (<div className="flex flex-col gap-1 py-1">

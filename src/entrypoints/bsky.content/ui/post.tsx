@@ -3,23 +3,48 @@ import { defineSocialMediaCopilotUi } from "@/utils/ui";
 import { sendMessage } from "@/utils/messaging";
 import { parseUrl } from "../tasks/post/parse-url";
 import { Logo } from "@/components/logo";
+import { toast } from "sonner"; // 引入 toast 提示
 
 const Component = () => {
+    // 获取当前页面 URL 信息
+    const getPostInfo = async () => {
+        try {
+            const url = new URL(location.href);
+            return await parseUrl(url); 
+        } catch (e) {
+            toast.error("无效的 Bluesky 帖子链接");
+            throw e;
+        }
+    }
+
     const handleOpenDialog = async () => {
         try {
-            // 简单的验证当前 URL 是否为有效的帖子 URL
-            const url = new URL(location.href);
-            await parseUrl(url); 
-            
-            // 打开弹窗并预填当前链接
+            const postInfo = await getPostInfo();
+            // 打开帖子数据导出弹窗
             sendMessage('openTaskDialog', {
                 name: 'post',
-                urls: [location.href] // 注意这里需要传给 UrlArrayFormField 的默认值可能需要适配
-                // 根据 components/form-field/url-array.tsx 的逻辑，它可能不接受默认值回填
-                // 如果需要回填，需要在 tasks/post/index.tsx 的 defaultValues 里处理
+                urls: [postInfo.href] 
             });
         } catch (e) {
-            console.error("当前页面不是有效的 Bluesky 帖子");
+            console.error(e);
+        }
+    }
+
+    // 新增：导出评论的处理函数
+    const handleExportComments = async () => {
+        try {
+            const postInfo = await getPostInfo();
+            // 打开评论导出弹窗，并传递当前帖子信息
+            sendMessage('openTaskDialog', {
+                name: 'post-comment',
+                post: {
+                    handle: postInfo.handle,
+                    rkey: postInfo.rkey,
+                    href: postInfo.href
+                }
+            });
+        } catch (e) {
+            console.error(e);
         }
     }
 
@@ -29,6 +54,10 @@ const Component = () => {
             <Button size="sm" variant="secondary" onClick={handleOpenDialog} className="h-8">
                 导出数据
             </Button>
+            {/* 新增按钮 */}
+            <Button size="sm" variant="secondary" onClick={handleExportComments} className="h-8">
+                导出评论
+            </Button>
         </div>
     );
 };
@@ -36,10 +65,7 @@ const Component = () => {
 export default defineSocialMediaCopilotUi({
     name: 'social-media-copilot-bsky-post',
     position: "inline",
-    // 匹配帖子详情页
     matches: ["*://bsky.app/profile/*/post/*"],
-    // Bluesky 页面元素很多没有固定 class，但 data-testid 很稳定
-    // "post-action-bar" 是帖子底部的点赞/转发栏
     anchor: "div[data-testid='post-action-bar']", 
     append: "after",
     render: ({ root }) => {

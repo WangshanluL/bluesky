@@ -70,7 +70,7 @@ const platforms: Platform[] = [
             ];
         }
     },
-    {
+{
         code: 'bsky',
         hostname: 'bsky.app',
         getItems: (handleOpenDialog) => {
@@ -78,9 +78,14 @@ const platforms: Platform[] = [
                 { 
                     icon: BookText, 
                     title: '批量导出帖子数据', 
-                    // 对应 src/entrypoints/bsky.content/tasks/post/index.tsx
                     onClick: () => { handleOpenDialog('post') } 
                 },
+
+                { 
+    icon: MessageSquareMore, 
+    title: '批量导出帖子评论', 
+    onClick: () => { handleOpenDialog('post-comment') } // 这里的名字必须和上面 index.tsx 里的 name 一致
+},
                 {
                     icon: CircleUser,
                     title: '批量导出用户信息',

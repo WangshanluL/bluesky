@@ -71,17 +71,46 @@ const platforms: Platform[] = [
     },
     {
         code: 'bsky',
-        hostname: 'bsky.app', // Bluesky 的域名
+        hostname: 'bsky.app',
         getItems: (handleOpenDialog) => {
             return [
                 { 
                     icon: BookText, 
                     title: '批量导出帖子数据', 
-                    // 这里对应之前写的 src/entrypoints/bsky.content/tasks/post/index.tsx 中的 name: "post"
+                    // 对应 src/entrypoints/bsky.content/tasks/post/index.tsx
                     onClick: () => { handleOpenDialog('post') } 
                 },
-                // 如果以后写了导出博主的功能，可以在这里加：
-                // { icon: CircleUser, title: '批量导出博主信息', onClick: () => { handleOpenDialog('author') } },
+                {
+                    icon: CircleUser,
+                    title: '批量导出用户信息',
+                    defaultExpand: true,
+                    items: [
+                        { 
+                            icon: BookUser, 
+                            title: '导出用户发帖(Author Feed)', 
+                            onClick: () => { handleOpenDialog('author-post') } 
+                        },
+                        { 
+                            icon: BookUser, 
+                            title: '导出用户粉丝(Followers)', 
+                            onClick: () => { 
+                                // 这里我们需要传递 type 参数，但 handleOpenDialog 封装简单。
+                                // 可以在 onMessage 接收端处理默认值，或者这里发消息时携带更多参数
+                                // 简单起见，我们在 Task Dialog 初始化时如果不传 type 默认为 followers，
+                                // 或者你需要修改 main.tsx 的 handleOpenDialog 允许传参。
+                                // 这里假设修改了 handleOpenDialog 或直接发消息:
+                                sendMessage('openTaskDialog', { name: 'author-followers', type: 'followers' }, tab?.id);
+                            } 
+                        },
+                        { 
+                            icon: BookUser, 
+                            title: '导出用户关注(Following)', 
+                            onClick: () => { 
+                                sendMessage('openTaskDialog', { name: 'author-followers', type: 'following' }, tab?.id);
+                            } 
+                        },
+                    ]
+                }
             ];
         }
     }

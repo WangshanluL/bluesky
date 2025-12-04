@@ -10,9 +10,20 @@ export function getPostThread(uri: string) {
     });
 }
 
-// 解析 Handle (用户名) 为 DID
+// 解析 Handle
 export function resolveHandle(handle: string) {
     return request.get("com.atproto.identity.resolveHandle", {
         params: { handle }
+    });
+}
+
+// 获取用户发帖列表
+export function getAuthorFeed(params: { actor: string; limit?: number; cursor?: string }) {
+    return request.get("app.bsky.feed.getAuthorFeed", {
+        params: {
+            limit: 100,
+            filter: 'posts_with_replies', // 包含回复
+            ...params
+        }
     });
 }

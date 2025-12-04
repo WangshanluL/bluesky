@@ -2,16 +2,17 @@ import { TaskProcessor, TaskDownloadOption } from "@/utils/task";
 import { generateExcelDownloadOption } from "@/utils/fileinfo";
 import { resolveHandle, getPostThread } from "../../api/feed";
 
-// 1. 在这里定义类型，不依赖外部文件，确保编译通过
+// 定义数据结构
 type PostUrlInfo = {
     handle: string;
     rkey: string;
     href: string;
 }
 
-// 2. 定义任务所需的条件
+// 模拟 FormSchema 的结构
 type CommentTaskCondition = {
     urls: PostUrlInfo[];
+    limitPerId: number;
     requestInterval?: number;
 }
 
@@ -51,10 +52,11 @@ export class Processor extends TaskProcessor<CommentTaskCondition> {
                 args: [atUri, 100] // 深度100
             });
 
-            // 提取数据
+            // 提取数据并手动缓存为数组，Key 使用 rkey
             if (res && res.thread) {
                 const flatComments: any[] = [];
                 this.extractComments(res.thread, flatComments, urlItem.href);
+                // 这里我们手动存入了数组
                 this.dataCache.set(urlItem.rkey, flatComments);
             }
 
@@ -95,30 +97,37 @@ export class Processor extends TaskProcessor<CommentTaskCondition> {
             '头像'
         ]];
 
-        this.dataCache.forEach((comments: any[]) => {
-            comments.forEach((item) => {
-                const post = item.post;
-                const author = post.author;
-                const record = post.record;
+        // 关键修改：不再遍历整个 dataCache，而是根据 urls 里的 rkey 精准获取
+        // 这样可以避开 next() 方法自动缓存的 API 响应对象（那些对象没有 forEach 方法）
+        for (const urlItem of this.condition.urls) {
+            const comments = this.dataCache.get(urlItem.rkey);
+            
+            // 增加安全检查：确保取出来的是数组才进行遍历
+            if (Array.isArray(comments)) {
+                comments.forEach((item) => {
+                    const post = item.post;
+                    const author = post.author;
+                    const record = post.record;
 
-                const row = [];
-                row.push(item.rootUrl);
-                row.push(post.uri);
-                row.push(record.text || '');
-                row.push(record.createdAt ? new Date(record.createdAt) : '-');
-                row.push(post.likeCount || 0);
-                row.push(post.replyCount || 0);
-                row.push(post.repostCount || 0);
-                
-                row.push(author.handle);
-                row.push(author.displayName || '');
-                row.push(author.description || '');
-                row.push(author.did);
-                row.push(author.avatar || '');
+                    const row = [];
+                    row.push(item.rootUrl);
+                    row.push(post.uri);
+                    row.push(record.text || '');
+                    row.push(record.createdAt ? new Date(record.createdAt) : '-');
+                    row.push(post.likeCount || 0);
+                    row.push(post.replyCount || 0);
+                    row.push(post.repostCount || 0);
+                    
+                    row.push(author.handle);
+                    row.push(author.displayName || '');
+                    row.push(author.description || '');
+                    row.push(author.did);
+                    row.push(author.avatar || '');
 
-                dataList.push(row);
-            });
-        });
+                    dataList.push(row);
+                });
+            }
+        }
 
         return generateExcelDownloadOption(dataList, "Bluesky-评论数据");
     }
